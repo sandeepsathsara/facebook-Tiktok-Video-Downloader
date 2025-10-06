@@ -1,0 +1,6 @@
+pytube
+moviepy
+requests
+tkinter
+ttkthemes
+TikTokApi
