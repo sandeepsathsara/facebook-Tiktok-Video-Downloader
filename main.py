@@ -1,58 +1,97 @@
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-from ttkthemes import ThemedTk
+import customtkinter as ctk
+from tkinter import filedialog, messagebox
 import threading
 from youtube_downloader import download_youtube
 from tiktok_downloader import download_tiktok
 
+# ---------- Functions ----------
 def select_folder():
     path = filedialog.askdirectory()
     folder_var.set(path)
 
-def download_youtube_thread():
+def youtube_download_thread():
     url = url_entry.get()
     path = folder_var.get()
-    resolution = res_var.get()
-    as_audio = audio_var.get()
+    res = res_var.get()
+    audio = audio_var.get()
+    if not url or not path:
+        messagebox.showerror("Error", "Please enter URL and select folder")
+        return
     try:
-        download_youtube(url, path, resolution, as_audio)
-        messagebox.showinfo("Success", "YouTube Download Completed!")
+        progress_label.configure(text="Downloading YouTube...")
+        download_youtube(url, path, resolution=res, as_audio=audio)
+        progress_label.configure(text="✅ YouTube Download Completed!")
     except Exception as e:
         messagebox.showerror("Error", str(e))
+        progress_label.configure(text="❌ Error!")
 
-def download_tiktok_thread():
+def tiktok_download_thread():
     url = url_entry.get()
     path = folder_var.get()
+    if not url or not path:
+        messagebox.showerror("Error", "Please enter URL and select folder")
+        return
     try:
+        progress_label.configure(text="Downloading TikTok...")
         download_tiktok(url, path)
-        messagebox.showinfo("Success", "TikTok Download Completed!")
+        progress_label.configure(text="✅ TikTok Download Completed!")
     except Exception as e:
         messagebox.showerror("Error", str(e))
+        progress_label.configure(text="❌ Error!")
 
-# GUI
-root = ThemedTk(theme="arc")
-root.title("TikTok & YouTube Downloader")
-root.geometry("500x400")
-root.resizable(False, False)
+# ---------- GUI ----------
+ctk.set_appearance_mode("Dark")
+ctk.set_default_color_theme("green")  # green accent
 
-# Widgets
-tk.Label(root, text="Video URL:", font=("Arial", 12)).pack(pady=5)
-url_entry = tk.Entry(root, width=50, font=("Arial", 12))
-url_entry.pack(pady=5)
+app = ctk.CTk()
+app.geometry("600x450")
+app.title("🎬 Modern TikTok & YouTube Downloader")
+app.resizable(False, False)
 
-tk.Label(root, text="Save Folder:", font=("Arial", 12)).pack(pady=5)
-folder_var = tk.StringVar()
-tk.Entry(root, textvariable=folder_var, width=40).pack(side="left", padx=10)
-ttk.Button(root, text="Browse", command=select_folder).pack(side="left")
+folder_var = ctk.StringVar()
+res_var = ctk.StringVar(value="720p")
+audio_var = ctk.BooleanVar()
 
-tk.Label(root, text="Resolution:", font=("Arial", 12)).pack(pady=10)
-res_var = tk.StringVar(value="720p")
-ttk.OptionMenu(root, res_var, "1080p", "720p", "480p", "360p").pack()
+# ---------- Title ----------
+title = ctk.CTkLabel(app, text="🌟 Video Downloader", font=ctk.CTkFont(size=24, weight="bold"))
+title.pack(pady=(20,10))
 
-audio_var = tk.BooleanVar()
-ttk.Checkbutton(root, text="Download as MP3", variable=audio_var).pack(pady=10)
+# ---------- URL ----------
+ctk.CTkLabel(app, text="Video URL:", font=ctk.CTkFont(size=14)).pack(pady=(10,5))
+url_entry = ctk.CTkEntry(app, width=500, height=35, font=ctk.CTkFont(size=14))
+url_entry.pack(pady=(0,10))
 
-ttk.Button(root, text="Download YouTube", width=25, command=lambda: threading.Thread(target=download_youtube_thread).start()).pack(pady=10)
-ttk.Button(root, text="Download TikTok", width=25, command=lambda: threading.Thread(target=download_tiktok_thread).start()).pack(pady=10)
+# ---------- Save Folder ----------
+ctk.CTkLabel(app, text="Save Folder:", font=ctk.CTkFont(size=14)).pack(pady=(5,5))
+frame_folder = ctk.CTkFrame(app)
+frame_folder.pack(pady=(0,10))
+folder_entry = ctk.CTkEntry(frame_folder, textvariable=folder_var, width=350, height=30)
+folder_entry.pack(side="left", padx=5, pady=5)
+ctk.CTkButton(frame_folder, text="Browse", command=select_folder, width=100, height=30, fg_color="#FF9900",
+              hover_color="#FFB84D").pack(side="left", padx=5)
 
-root.mainloop()
+# ---------- YouTube Options ----------
+ctk.CTkLabel(app, text="Resolution (YouTube):", font=ctk.CTkFont(size=14)).pack(pady=(5,5))
+res_option = ctk.CTkOptionMenu(app, values=["1080p","720p","480p","360p"], variable=res_var, width=150, dropdown_hover_color="#33CCFF")
+res_option.pack(pady=(0,10))
+
+ctk.CTkCheckBox(app, text="Download as MP3 (Audio Only)", variable=audio_var).pack(pady=(0,15))
+
+# ---------- Buttons ----------
+button_frame = ctk.CTkFrame(app, fg_color="#1E1E2F")
+button_frame.pack(pady=(5,15), fill="x")
+
+ctk.CTkButton(button_frame, text="🎥 Download YouTube", command=lambda: threading.Thread(target=youtube_download_thread).start(),
+              width=250, height=40, fg_color="#33CCFF", hover_color="#66DDFF", corner_radius=12).pack(side="left", padx=20, pady=10)
+ctk.CTkButton(button_frame, text="🎵 Download TikTok", command=lambda: threading.Thread(target=tiktok_download_thread).start(),
+              width=250, height=40, fg_color="#FF3399", hover_color="#FF66B3", corner_radius=12).pack(side="left", padx=20, pady=10)
+
+# ---------- Progress Label ----------
+progress_label = ctk.CTkLabel(app, text="", font=ctk.CTkFont(size=14))
+progress_label.pack(pady=15)
+
+# ---------- Footer ----------
+footer = ctk.CTkLabel(app, text="Created by Sathsara Sandeep | 2025", font=ctk.CTkFont(size=10), text_color="#AAAAAA")
+footer.pack(side="bottom", pady=10)
+
+app.mainloop()
